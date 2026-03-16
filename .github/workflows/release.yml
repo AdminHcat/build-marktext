@@ -29,11 +29,13 @@ jobs:
           cache: yarn
           cache-dependency-path: yarn.lock
 
-      # Workaround: Fix native build failure due to outdated node-gyp version.
+      # 修复 electron-rebuild 因 node-gyp 版本过低无法识别 Visual Studio 的问题
       - name: Fix node-gyp
         run: |
           npm install --global node-gyp@latest
-          npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
+          # 设置环境变量，强制 electron-rebuild 使用全局安装的最新 node-gyp
+          $nodeGypPath = "$(npm prefix -g)\node_modules\node-gyp\bin\node-gyp.js"
+          echo "npm_config_node_gyp=$nodeGypPath" >> $env:GITHUB_ENV
           node-gyp install
         shell: pwsh
 
@@ -44,7 +46,6 @@ jobs:
           key: ${{ runner.os }}-node_modules-cache-v2-${{ hashFiles(format('{0}{1}', github.workspace, '\yarn.lock')) }}
           restore-keys: |
             ${{ runner.os }}-node_modules-cache-v2-
-
       - name: Cache Electron
         uses: actions/cache@v5
         with:
@@ -64,7 +65,6 @@ jobs:
         run: |
           yarn run lint
           yarn run validate-licenses
-
       - name: Run unit and E2E tests
         run: yarn run test
 
