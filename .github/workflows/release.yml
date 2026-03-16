@@ -2,8 +2,9 @@ name: Release
 
 on:
   push:
-    branches:
-      - 'release-v*'
+    tags:
+      - '*'
+  workflow_dispatch:
 
 jobs:
   unix:
